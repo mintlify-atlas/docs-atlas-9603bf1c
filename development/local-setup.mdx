@@ -1,0 +1,56 @@
+---
+title: "Running GPT Image Playground locally for development"
+description: "Clone the repository, install dependencies, and start the Vite development server to run and modify GPT Image Playground on your local machine."
+---
+
+GPT Image Playground is a standard Vite + React + TypeScript project. Running it locally takes only a few commands and gives you hot-reload, source-map debugging, and access to the optional dev proxy for CORS-free API testing.
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/CookSleep/gpt_image_playground.git
+    cd gpt_image_playground
+    ```
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  <Step title="(Optional) Set a default API URL">
+    Create a `.env.local` file in the project root to pre-fill the API URL at build time:
+
+    ```bash .env.local
+    VITE_DEFAULT_API_URL=https://api.openai.com/v1
+    ```
+
+    This value is baked into the bundle and shown as the default in the settings panel. Users can still override it in the UI.
+  </Step>
+  <Step title="Start the development server">
+    ```bash
+    npm run dev
+    ```
+
+    The app is available at `http://localhost:5173`. Changes to source files reload instantly.
+  </Step>
+</Steps>
+
+## Building for production
+
+To produce an optimized static bundle:
+
+```bash
+npm run build
+```
+
+Output is written to `dist/`. You can preview the built bundle locally with:
+
+```bash
+npm run preview
+```
+
+The `dist/` directory can be deployed to any static file host — Vercel, Netlify, Nginx, GitHub Pages, or Cloudflare Pages.
+
+<Note>
+  The `VITE_DEFAULT_API_URL` environment variable is evaluated at **build time**, not runtime. To change the default API URL in a production deployment without rebuilding, use the Docker image and the `API_URL` runtime environment variable instead.
+</Note>

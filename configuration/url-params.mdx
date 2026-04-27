@@ -1,0 +1,50 @@
+---
+title: "Pre-filling settings with URL query parameters"
+description: "GPT Image Playground supports URL query parameters to pre-fill the API URL, API key, API mode, and Codex CLI mode — useful for bookmarks and sharing."
+---
+
+URL query parameters let you open GPT Image Playground with specific settings already applied, without having to open the Settings panel and fill them in manually. This is useful for personal bookmarks that target a particular endpoint, or for sharing a pre-configured link with a team where everyone uses the same API URL and mode.
+
+When GPT Image Playground loads, it reads any recognized parameters from the URL query string and applies them to the current settings before the app fully initializes. Parameters that are not present in the URL leave the corresponding settings unchanged.
+
+## Supported parameters
+
+| Parameter  | Values                         | Default    | Description                                                                                      |
+| ---------- | ------------------------------ | ---------- | ------------------------------------------------------------------------------------------------ |
+| `apiUrl`   | Any valid URL string           | —          | Sets the API base URL (e.g. `https://api.openai.com/v1`).                                        |
+| `apiKey`   | Any string                     | —          | Sets the API key (e.g. `sk-xxxx`).                                                               |
+| `apiMode`  | `images` or `responses`        | `images`   | Sets the API mode. Values other than `responses` are treated as `images`.                        |
+| `codexCli` | `true` or `false`              | `false`    | Enables or disables Codex CLI compatibility mode. Only the value `true` enables the mode.        |
+
+## Examples
+
+The following URLs open GPT Image Playground with the API URL and key pre-filled, ready to generate images without any manual configuration:
+
+```text
+https://gpt-image-playground.cooksleep.dev?apiUrl={address}&apiKey={key}
+```
+
+```text
+https://cooksleep.github.io/gpt_image_playground?apiUrl={address}&apiKey={key}
+```
+
+To also set the API mode to Responses API and enable Codex CLI mode:
+
+```text
+https://gpt-image-playground.cooksleep.dev?apiUrl={address}&apiKey={key}&apiMode=responses&codexCli=true
+```
+
+<Warning>
+  Embedding an API key in a URL exposes it to anyone who receives the link — through browser history, server logs, referrer headers, or simply by forwarding the URL. Only use `apiKey` in URLs for personal bookmarks stored on your own device. Never share a URL that contains an API key.
+</Warning>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Configuring your API key and endpoint" icon="key" href="/configuration/api-setup">
+    Full reference for the Settings panel and every configurable field.
+  </Card>
+  <Card title="Codex CLI compatibility mode" icon="terminal" href="/configuration/codex-cli-mode">
+    Learn what Codex CLI mode does and when to enable it.
+  </Card>
+</CardGroup>

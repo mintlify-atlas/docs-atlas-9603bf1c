@@ -1,0 +1,83 @@
+---
+title: "Browsing and managing your generation history"
+description: "GPT Image Playground stores all generation tasks in a searchable waterfall grid with filtering, favorites, multi-select, and one-click reuse."
+---
+
+Every generation you submit creates a task record that is stored permanently in your browser's IndexedDB. The main screen displays all tasks in a waterfall grid, ordered newest first. The history view gives you search, status filtering, favorites, multi-select bulk operations, and one-click reuse — so you can find, organize, and build on past work without losing anything.
+
+## Task cards
+
+Each card in the waterfall grid represents one generation task and shows:
+
+- **Thumbnails** of all output images (or a status indicator while running)
+- **Prompt text** used for that generation
+- **Key parameters** — size, quality, format, and batch count
+- **Status badge** — one of `running`, `done`, or `error`
+- **Elapsed time** — how long the API took to respond
+
+Cards appear at the top of the grid the moment you submit a request, before the API has responded. The card updates in place when the task completes or fails.
+
+## Search and filtering
+
+The toolbar at the top of the history grid provides two ways to narrow the list:
+
+- **Search** — Type any keyword to filter cards by prompt text. The filter applies in real time as you type.
+- **Status filter** — Choose `All`, `Running`, `Done`, or `Error` to show only tasks in that state.
+
+Both filters can be active at the same time. For example, you can search for "cat" and filter to `Error` to find failed cat-related generations.
+
+## Favorites
+
+Click the star icon on any task card to mark it as a favorite. The star state is saved with the task record in IndexedDB. Use the **Favorites** toggle in the toolbar to show only favorited tasks, hiding everything else. This lets you maintain a curated set of important generations without deleting others.
+
+## Multi-select and bulk operations
+
+You can select multiple task cards to perform batch operations.
+
+**On desktop:**
+
+- **Drag to select** — Click and drag across the grid to draw a selection box. Any card the box overlaps is added to the selection.
+- **Ctrl+click / Cmd+click** — Click individual cards while holding Ctrl (Windows/Linux) or Cmd (macOS) to toggle them in and out of the selection.
+
+**On mobile:**
+
+- **Swipe right** — Swipe a card to the right to select it.
+- **Swipe left** — Swipe a card to the left to deselect it.
+
+Once cards are selected, the bulk action bar appears with the following options:
+
+- **Favorite** — Toggle the favorite state on all selected tasks at once.
+- **Delete** — Permanently delete all selected tasks and their associated images.
+- **Select all visible** — Extend the selection to every task currently shown in the grid (after applying search and status filters).
+
+## Quick reuse
+
+Click **Reuse config** on any task card to restore that task's configuration to the input bar. This action restores:
+
+- The prompt text
+- All generation parameters (size, quality, format, compression, moderation, and batch count)
+- Any reference input images that were used for that task
+
+After clicking **Reuse config**, you can modify the restored prompt or parameters before generating again, making it easy to iterate on a setup you found useful without reconstructing it manually.
+
+## Detail view
+
+Click any task card to open the full detail modal. The detail view shows:
+
+- All **input images** (reference images you uploaded for that task)
+- All **output images** at full resolution
+- **Actual parameters** — the values the API reported it used, highlighted if they differ from what you requested
+- **Revised prompts** — if the model rewrote your prompt, the revised text appears alongside the original
+- **Timing** — exact start time, finish time, and total elapsed duration
+- **Error details** — if the task failed, the full error message from the API
+
+The detail view also exposes the **Add to input** button on each output image and the **Reuse config** button, so you can continue working directly from the modal without closing it first.
+
+## Image actions
+
+Right-click any image on desktop, or long-press on mobile, to open a context menu with the following actions:
+
+- **Copy to clipboard** — Copies the image data directly to your system clipboard, ready to paste into another application.
+- **Download** — Saves the image file to your device in its original format (PNG, JPEG, or WebP).
+
+These actions are available on images in both the task card grid and the detail view modal.

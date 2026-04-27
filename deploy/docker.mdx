@@ -1,0 +1,91 @@
+---
+title: "Deploy GPT Image Playground with Docker and Nginx"
+description: "Run GPT Image Playground in a Docker container using the pre-built image from GitHub Container Registry, with optional API URL injection."
+---
+
+Docker deployment is the most portable option for self-hosted environments. The pre-built image packages the compiled static app inside an Nginx container, so you get a production-ready web server with no Node.js runtime required at run time. A small shell script runs at container startup to inject a default API URL into the bundled JavaScript, giving you runtime control over the default without rebuilding the image.
+
+## Pre-built image
+
+The official image is published to GitHub Container Registry after every release:
+
+```
+ghcr.io/cooksleep/gpt_image_playground:latest
+```
+
+Versioned tags are also available for pinning to a specific release, for example `ghcr.io/cooksleep/gpt_image_playground:0.2.3` or the minor-version alias `ghcr.io/cooksleep/gpt_image_playground:0.2`.
+
+<Note>For production deployments, prefer a pinned version tag such as `0.2.3` over `latest`. Pinned tags give you explicit control over when updates happen and make rollbacks straightforward. Use `latest` when you want to always run the most recently published release and are comfortable with automatic updates on every pull.</Note>
+
+## Docker CLI
+
+To start a container with a single command:
+
+```bash
+docker run -d -p 8080:80 \
+  -e API_URL=https://api.openai.com/v1 \
+  ghcr.io/cooksleep/gpt_image_playground:latest
+```
+
+The container listens on port 80 internally; the `-p 8080:80` flag maps it to port 8080 on your host. You can change `8080` to any available host port.
+
+## Docker Compose
+
+For persistent configuration, create a `compose.yml` file:
+
+```yaml
+services:
+  gpt-image-playground:
+    image: ghcr.io/cooksleep/gpt_image_playground:latest
+    environment:
+      - API_URL=https://api.openai.com/v1
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+```
+
+Then start the service:
+
+```bash
+docker compose up -d
+```
+
+## Environment variables
+
+| Variable  | Default | Description                                                                                                                                                                                  |
+| --------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_URL` | *(none)* | Sets the default API URL pre-filled in the app's settings. At container startup, a shell script replaces a build-time placeholder string inside the compiled JavaScript bundles with this value. If not set, the app shows no default URL. Users can override it at any time in the settings panel. |
+
+The injection mechanism works by searching all `.js` files in `/usr/share/nginx/html/assets/` for the build-time placeholder `__VITE_DEFAULT_API_URL_PLACEHOLDER__` and replacing it with the value of `API_URL`. This means the substitution happens at runtime — you do not need to rebuild the image to change the default API URL.
+
+## Accessing the app
+
+Once the container is running, open `http://localhost:8080` in your browser. Click the settings icon in the top-right corner and enter your API key. The key is stored locally in your browser's storage and is never sent anywhere except the API endpoint you configure.
+
+## Updating
+
+<Tabs>
+  <Tab title="latest tag">
+    Pull the newest image and restart the container:
+
+    ```bash
+    docker compose pull
+    docker compose up -d
+    ```
+
+    Docker Compose replaces the running container with the newly pulled image. Old image layers are removed with `docker image prune` if you want to reclaim disk space.
+  </Tab>
+  <Tab title="Pinned version tag">
+    Edit your `compose.yml` and change the image tag to the new version:
+
+    ```yaml
+    image: ghcr.io/cooksleep/gpt_image_playground:0.2.13
+    ```
+
+    Then apply the change:
+
+    ```bash
+    docker compose up -d
+    ```
+  </Tab>
+</Tabs>

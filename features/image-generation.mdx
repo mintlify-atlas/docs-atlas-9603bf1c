@@ -1,0 +1,93 @@
+---
+title: "Text-to-image generation in GPT Image Playground"
+description: "Use GPT Image Playground to generate images from text prompts via the Images API or Responses API, with batch support and parameter control."
+---
+
+GPT Image Playground turns a text prompt into one or more images by sending a request to OpenAI's image APIs. Depending on the API mode you have selected in Settings, the app calls either the Images API (`/v1/images/generations`) with the `gpt-image-2` model or the Responses API (`/v1/responses`) using the `image_generation` tool with a text model like `gpt-5.5`. Both modes support batch generation, parameter control, and iterative editing.
+
+## Choosing an API mode
+
+The API mode you select in **Settings** determines which endpoint is used and which model you need to configure.
+
+<Tabs>
+  <Tab title="Images API">
+    The Images API is the default mode. The app calls `/v1/images/generations` for text-to-image and `/v1/images/edits` when reference images are attached.
+
+    - Default model: `gpt-image-2`
+    - Supports the `n` parameter natively to return multiple images in one request
+    - Set **API mode** to `images` in Settings (the default)
+
+    ```text
+    POST /v1/images/generations
+    {
+      "model": "gpt-image-2",
+      "prompt": "...",
+      "size": "1024x1024",
+      "quality": "auto",
+      "output_format": "png",
+      "n": 2
+    }
+    ```
+  </Tab>
+  <Tab title="Responses API">
+    The Responses API routes the request through `/v1/responses` and uses the `image_generation` tool, which allows any compatible text model to generate images as part of a multimodal workflow.
+
+    - Default model: `gpt-5.5`
+    - Multiple images are produced as concurrent single-image requests (see [Batch generation](#batch-generation))
+    - Set **API mode** to `responses` in Settings
+
+    ```text
+    POST /v1/responses
+    {
+      "model": "gpt-5.5",
+      "input": "...",
+      "tools": [{ "type": "image_generation", "action": "generate", ... }],
+      "tool_choice": "required"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+You can switch API modes at any time from Settings without losing your history.
+
+## Writing a prompt
+
+The text input bar runs along the bottom of the screen. Click the text area and type a description of the image you want to generate. Click **Generate** (or press Enter) to submit.
+
+When **Codex CLI mode** is enabled in Settings, the app automatically prepends the following prefix to every prompt before sending it to the API:
+
+```text
+Use the following text as the complete prompt. Do not rewrite it:
+```
+
+This prefix prevents the model from paraphrasing or reinterpreting your prompt, which is useful when working with Codex CLI-based endpoints that would otherwise alter the prompt text.
+
+## Batch generation
+
+Set the **n** (batch count) parameter in the parameter controls above the input bar to generate multiple images in a single submission. When `n` is greater than 1:
+
+- **Images API** — sends a single request with `"n": <count>` and receives all images in one response.
+- **Responses API** — fires `n` concurrent single-image requests and aggregates the results.
+- **Codex CLI mode with Images API** — also uses concurrent requests, because the `n` parameter is not reliably supported by Codex CLI endpoints.
+
+<Note>
+  The Images API supports the `n` parameter natively, so all images in a batch share the same API call and count as one request. The Responses API and Codex CLI mode always achieve multi-image output through concurrent requests, so each image counts as a separate API call.
+</Note>
+
+## Viewing results
+
+After you submit a prompt, a task card appears immediately at the top of the history grid with a **running** status indicator. When the API responds, the card updates automatically with:
+
+- Thumbnails of every generated image
+- The prompt text and requested parameters
+- Elapsed generation time
+
+Click any task card to open the **detail view**, which shows full-size images for every input and output, the actual parameters the API applied, revised prompts (if the model rewrote yours), and any error details.
+
+Right-click an image on desktop (or long-press on mobile) to open a context menu with options to **copy to clipboard** or **download** the image directly.
+
+## Iterative editing
+
+Any generated image can be used as a reference for the next generation. In the detail view, click **Add to input** on any output image to add it to the reference image list in the input bar. The next time you generate, the app treats it as a reference input and calls the editing endpoint instead of the generation endpoint.
+
+This workflow lets you progressively refine an image across multiple rounds without leaving the app. See [Editing images with reference inputs](/features/image-editing) for the full editing flow.

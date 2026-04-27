@@ -1,0 +1,55 @@
+---
+title: "Deploy GPT Image Playground to Vercel (one-click)"
+description: "Deploy GPT Image Playground to Vercel in one click. The included vercel.json handles the build, static output, and SPA routing with no manual configuration."
+---
+
+Vercel is the recommended way to deploy GPT Image Playground. Because the app builds to a fully static `dist/` directory, Vercel can serve it from its global edge network with zero server configuration. The included `vercel.json` handles the build command, output directory, and SPA routing rewrites automatically, so the only thing you need to provide is a click and, optionally, an API URL.
+
+## One-click deployment
+
+The fastest path to a live deployment is the Vercel deploy button. Clicking it opens Vercel's project-creation flow, which forks the repository into your own GitHub account and immediately queues the first build.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FCookSleep%2Fgpt_image_playground&project-name=gpt-image-playground&repository-name=gpt-image-playground)
+
+<Steps>
+  <Step title="Click the deploy button">
+    Click the button above. Vercel prompts you to log in (or sign up) and then asks where to create the repository copy.
+  </Step>
+  <Step title="Import the repository">
+    Vercel clones `CookSleep/gpt_image_playground` into your chosen GitHub account or organization under the name `gpt-image-playground`.
+  </Step>
+  <Step title="Build and deploy">
+    Vercel automatically runs `npm install` followed by `npm run build`. The `dist/` directory produced by Vite is served as the static output. The `vercel.json` in the repository also configures a catch-all rewrite so client-side routing works correctly on every URL.
+  </Step>
+  <Step title="Open your live URL">
+    Once the build finishes, Vercel assigns a URL such as `https://gpt-image-playground-<hash>.vercel.app`. Open it and enter your API key in the settings panel to start generating images.
+  </Step>
+</Steps>
+
+<Tip>Vercel automatically triggers a new deployment every time you push a commit to the connected repository branch. No manual action is required.</Tip>
+
+## Setting a default API URL
+
+By default, the API URL field in the app's settings is empty and each user must fill it in themselves. If you want every visitor to your deployment to start with a pre-filled API URL, set a build-time environment variable in Vercel.
+
+In your Vercel project, go to **Settings → Environment Variables** and add:
+
+```
+VITE_DEFAULT_API_URL=https://api.openai.com/v1
+```
+
+Redeploy the project after saving the variable. The value is baked into the static bundle at build time, so it will appear pre-filled in the settings panel for all users of your deployment. Users can still override it at any time — it is a default, not a restriction.
+
+## After deployment
+
+Once your deployment is live, open the Vercel-assigned URL in a browser. Click the settings icon in the top-right corner of the app and enter your OpenAI API key. The key is stored locally in your browser and never sent anywhere except directly to the API endpoint you configure.
+
+## Keeping up to date
+
+When Vercel deploys via the one-click button, it creates a private copy of the repository in your GitHub account. Upstream changes to `CookSleep/gpt_image_playground` are not automatically pulled into your copy.
+
+To update your deployment:
+
+1. On your GitHub repository page, click **Sync fork** to pull in the latest commits from the upstream repository.
+2. After the sync, Vercel detects the new commits and automatically redeploys.
+3. If you have automatic deployments disabled, go to your Vercel project's **Deployments** tab and click **Redeploy** on the latest commit.

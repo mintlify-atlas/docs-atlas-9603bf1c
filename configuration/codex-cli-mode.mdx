@@ -1,0 +1,77 @@
+---
+title: "Codex CLI compatibility mode for non-standard endpoints"
+description: "Codex CLI mode adapts GPT Image Playground for API endpoints with non-standard behavior, fixing quality params and prompt rewriting issues."
+---
+
+Some API endpoints that are derived from or inspired by Codex CLI behave differently from the official OpenAI API: they ignore certain parameters, skip fields in the response, or silently rewrite prompt text. Codex CLI mode is a set of behavioral adjustments that GPT Image Playground applies when it detects or suspects this kind of non-standard endpoint, so that you still get predictable output even when the endpoint doesn't fully conform to the OpenAI API contract.
+
+<Note>
+  Codex CLI mode is designed for compatibility with non-official endpoints. You do not need to enable it when using the official OpenAI API at `https://api.openai.com/v1`.
+</Note>
+
+## What it does
+
+When Codex CLI mode is enabled, GPT Image Playground makes three specific changes to how it communicates with the API:
+
+1. **Quality parameter is fixed to `auto` and omitted from requests.** The quality selector in the UI is locked to `auto` and the `quality` field is not included in any request body or `FormData` payload. This avoids errors on endpoints that reject or mishandle the `quality` parameter.
+
+2. **Images API batch requests are split into concurrent single-image requests.** When the batch count (`n`) is greater than 1, GPT Image Playground fires `n` parallel requests each with `n: 1` instead of sending a single request with `n: <count>`. This works around endpoints that accept the `n` parameter but always return only one image regardless of its value.
+
+3. **A no-rewrite prefix is prepended to every prompt.** Before sending the prompt to the API, the app prepends the following text:
+
+   ```text
+   Use the following text as the complete prompt. Do not rewrite it:
+   ```
+
+   This instructs the model not to paraphrase or reinterpret your prompt, which prevents the generated image from drifting away from your original intent when the underlying model would otherwise rewrite the prompt.
+
+## When to enable it
+
+Enable Codex CLI mode when:
+
+- You are connecting to an API endpoint derived from or built around Codex CLI.
+- The API returns a `revised_prompt` that differs from the prompt you submitted — a sign that the model is rewriting your input.
+- Requesting multiple images with `n > 1` consistently returns only one image.
+- You want to ensure the `quality` parameter is never sent, because your endpoint errors on unknown fields.
+
+## Auto-detection
+
+GPT Image Playground monitors API responses for two signals that suggest a non-standard endpoint is in use:
+
+- **Prompt was rewritten** — If the API returns a `revised_prompt` in the response that differs from the prompt that was submitted, the app detects this as prompt rewriting.
+- **No `revised_prompt` field returned** — The official OpenAI API always includes `revised_prompt` in image responses. If the field is absent entirely, the app treats this as a signal that the endpoint may not follow the standard API contract.
+
+When either signal is detected, GPT Image Playground displays a confirmation dialog asking whether you want to enable Codex CLI mode for the current API URL and API key combination. Confirming the dialog enables the mode immediately.
+
+## Dismissing auto-detection prompts
+
+If you dismiss the auto-detection dialog without enabling Codex CLI mode, the app records the current API URL and API key combination and will not show the prompt again for that specific combination. You can still enable Codex CLI mode manually at any time from the Settings panel.
+
+If you later change your API URL or API key, auto-detection will trigger again for the new combination if the same signals appear.
+
+## How to enable
+
+<Steps>
+  <Step title="Open Settings">
+    Click the **gear icon** in the top-right corner of the app to open the Settings panel.
+  </Step>
+  <Step title="Toggle Codex CLI mode">
+    Find the **Codex CLI mode** toggle next to the **API URL** field and switch it on.
+  </Step>
+  <Step title="Confirm the change">
+    The quality selector locks to `auto` immediately. Your next generation request will include the no-rewrite prompt prefix and will split batch requests into concurrent single-image calls if `n > 1`.
+  </Step>
+</Steps>
+
+You can also enable Codex CLI mode before opening the app by appending `?codexCli=true` to the URL. See [Pre-filling settings with URL query parameters](/configuration/url-params) for more on URL parameters.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Configuring your API key and endpoint" icon="key" href="/configuration/api-setup">
+    Full reference for the Settings panel, including the API mode and model fields.
+  </Card>
+  <Card title="Pre-filling settings with URL parameters" icon="link" href="/configuration/url-params">
+    Enable Codex CLI mode automatically via the `codexCli` URL parameter.
+  </Card>
+</CardGroup>

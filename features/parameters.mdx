@@ -1,0 +1,91 @@
+---
+title: "Image generation parameters: size, quality, format"
+description: "GPT Image Playground exposes fine-grained controls for image size, quality, output format, compression, moderation, and batch count per generation."
+---
+
+The parameter controls sit above the input bar at the bottom of the screen. Each setting maps directly to a field in the API request and is saved to your browser's `localStorage` so your preferences persist between sessions. Every parameter can be changed independently, and the app tracks the actual values the API applied — highlighting any mismatch between what you requested and what was used.
+
+## Size
+
+The size selector offers three categories of input:
+
+- **`auto`** — The model chooses the output dimensions. This is the default.
+- **Tier and ratio presets** — Pick a quality tier (`1K`, `2K`, or `4K`) combined with a common aspect ratio. The app calculates the exact resolution automatically.
+- **Custom dimensions** — Type a specific width and height in the format `WxH` (for example, `1280x720`).
+
+### Preset resolutions by tier and ratio
+
+| Ratio | 1K | 2K | 4K |
+|-------|-----|-----|-----|
+| 1:1 | 1024×1024 | 2048×2048 | 3840×3840 |
+| 4:3 | 1024×768 | 2048×1536 | 3840×2880 |
+| 3:4 | 768×1024 | 1536×2048 | 2880×3840 |
+| 16:9 | 1024×576 | 2048×1152 | 3840×2160 |
+| 9:16 | 576×1024 | 1152×2048 | 2160×3840 |
+| 21:9 | 1024×448 | 2048×896 | 3840×1664 |
+| 9:21 | 448×1024 | 896×2048 | 1664×3840 |
+| 3:2 | 1024×688 | 2048×1360 | 3840×2560 |
+| 2:3 | 688×1024 | 1360×2048 | 2560×3840 |
+
+When you open the size picker, the app reverse-matches your current size against the preset table and pre-selects the matching tier and ratio if one exists.
+
+### Auto-normalization for custom sizes
+
+Custom dimensions you enter are automatically normalized to comply with model constraints before being sent to the API. The normalization rules are applied in sequence:
+
+1. **Multiple of 16** — Both width and height are rounded to the nearest multiple of 16.
+2. **Maximum edge** — If either dimension exceeds 3840 px, the image is scaled down proportionally (floor to nearest multiple of 16).
+3. **Aspect ratio** — If the width-to-height ratio or height-to-width ratio exceeds 3:1, the longer dimension is clamped.
+4. **Total pixel count** — Total pixels must be between 655,360 and 8,294,400. If outside this range, the image is scaled to fit within the bounds.
+
+These rules are applied up to four times in sequence to ensure all constraints are satisfied simultaneously.
+
+## Quality
+
+Controls the generation quality sent to the API.
+
+| Value | Description |
+|-------|-------------|
+| `auto` | The model chooses the appropriate quality level (default) |
+| `low` | Faster, lower-cost generation |
+| `medium` | Balanced quality and speed |
+| `high` | Highest fidelity, slower and more expensive |
+
+<Note>
+  When **Codex CLI mode** is enabled, quality is fixed to `auto` and the `quality` field is not included in the API request. The quality selector in the UI is disabled and shows `auto` regardless of the value you previously selected.
+</Note>
+
+## Output format
+
+Controls the file format of the generated images.
+
+| Value | Description |
+|-------|-------------|
+| `PNG` | Lossless format. No compression option. Default. |
+| `JPEG` | Lossy format. Compression (0–100) available. |
+| `WebP` | Modern lossy format. Compression (0–100) available. |
+
+When you select `JPEG` or `WebP`, a **Compression** slider (0–100) appears. A value of 100 means maximum quality (minimum compression); 0 means minimum quality (maximum compression). For `PNG`, the compression field is hidden and is not sent to the API.
+
+## Moderation
+
+Controls the content moderation strictness applied by the API.
+
+| Value | Description |
+|-------|-------------|
+| `auto` | Standard moderation. Default. |
+| `low` | Less restrictive moderation for use cases that require it |
+
+## Batch count (n)
+
+Sets how many images to generate per submission. The default is `1`. Increase this to receive multiple variations from a single prompt.
+
+- **Images API** — Sends `"n": <count>` in the request body. The API returns all images in a single response.
+- **Responses API** — Fires `n` concurrent single-image requests. There is no native `n` parameter in this mode.
+- **Codex CLI mode** — Always uses concurrent requests for both API modes, regardless of the `n` value.
+
+## Actual parameters tracking
+
+When the API responds, it may return the actual parameter values it applied — these can differ from what you requested (for example, if the model adjusted the size or quality). The app captures the API-returned values in `actualParams` (and `actualParamsByImage` when individual images have different values) and displays them in the task detail view. Any field that differs from the requested value is highlighted so you can see exactly what the API used.
+
+If the API returns a `revised_prompt` for any image — indicating the model rewrote your original prompt — that revised text is also recorded and shown in the detail view alongside the original. If revision is detected and Codex CLI mode is not already enabled, the app will offer to enable it automatically.

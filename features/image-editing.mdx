@@ -1,0 +1,77 @@
+---
+title: "Editing images with reference inputs and natural language"
+description: "Upload up to 16 reference images to GPT Image Playground and use natural language to edit or transform them using the Images or Responses API."
+---
+
+Image editing in GPT Image Playground works by combining your text prompt with one or more reference images. When at least one reference image is present in the input bar, the app switches from generation mode to editing mode — passing both the prompt and the reference images to the API so the model can apply your instructions to the existing visuals. You can upload up to 16 reference images at once, and any generated output can be promoted back into the reference list for chained editing.
+
+## Adding reference images
+
+You can add reference images using any of the following methods:
+
+- **File picker** — Click the image icon to the left of the input bar to open your device's file picker and select one or more images.
+- **Paste** — Press `Ctrl+V` (Windows/Linux) or `Cmd+V` (macOS) anywhere on the page to paste an image from your clipboard.
+- **Drag and drop** — Drag one or more image files from your file manager and drop them anywhere on the page.
+
+Images are placed in a memory cache immediately on upload, so they appear in the preview strip right away. They are written to the browser's IndexedDB only when you submit a generation request, keeping startup and idle performance fast.
+
+The app deduplicates images by their SHA-256 hash, so adding the same image twice has no effect.
+
+## How editing works
+
+When at least one reference image is in the input bar, the app uses the editing endpoint rather than the generation endpoint.
+
+<Tabs>
+  <Tab title="Images API">
+    With reference images present, the app calls `/v1/images/edits` as a `multipart/form-data` request. Each reference image is attached as a separate `image[]` form field alongside the prompt and parameters.
+
+    ```text
+    POST /v1/images/edits
+    Content-Type: multipart/form-data
+
+    model=gpt-image-2
+    prompt=<your instruction>
+    size=1024x1024
+    output_format=png
+    image[]=<binary image 1>
+    image[]=<binary image 2>
+    ...
+    ```
+  </Tab>
+  <Tab title="Responses API">
+    With reference images present, the app calls `/v1/responses` with multimodal input — the prompt and all reference images are combined into a structured `content` array with `input_text` and `input_image` items. The `image_generation` tool is set to `"action": "edit"`.
+
+    ```text
+    POST /v1/responses
+    {
+      "model": "gpt-5.5",
+      "input": [
+        {
+          "role": "user",
+          "content": [
+            { "type": "input_text", "text": "..." },
+            { "type": "input_image", "image_url": "data:image/png;base64,..." },
+            ...
+          ]
+        }
+      ],
+      "tools": [{ "type": "image_generation", "action": "edit", ... }],
+      "tool_choice": "required"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+If there are no reference images in the input bar, the app always uses the generation endpoint regardless of API mode.
+
+## Iterating on outputs
+
+After a generation completes, you can promote any output image directly into the reference image list for the next round of editing. In the task card or detail view, click **Add to input** on any generated image. The image is added to the reference image strip in the input bar — you can then adjust your prompt and generate again.
+
+<Tip>
+  Chained editing is one of the most effective ways to achieve precise results. Start with a broad generation, then use **Add to input** to bring that output forward. Each subsequent round lets you apply a narrower, more targeted instruction to refine specific details — color, composition, style, or content — without starting from scratch.
+</Tip>
+
+## Removing reference images
+
+Each image in the reference strip shows a small **X** button in its corner. Click it to remove that image from the input. Removing a reference image does not delete it from your history — it only removes it from the current input session.

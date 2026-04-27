@@ -1,0 +1,69 @@
+---
+title: "GPT Image Playground: browser-based AI image tool"
+description: "GPT Image Playground generates and edits images via OpenAI's APIs, with local-first IndexedDB storage. No account, no backend, no data leaves your browser."
+---
+
+GPT Image Playground is a free, open-source web application that puts the full power of OpenAI's image generation APIs directly in your browser. Generate images from text prompts, edit them using reference images, fine-tune parameters like size, quality, and format — all while keeping every image and task record stored locally in your browser's IndexedDB. No backend, no account, no data ever leaves your device.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Set up your API key and generate your first image in minutes
+  </Card>
+  <Card title="Image generation" icon="wand-magic-sparkles" href="/features/image-generation">
+    Generate images from text prompts using the Images or Responses API
+  </Card>
+  <Card title="Image editing" icon="pen-to-square" href="/features/image-editing">
+    Upload reference images and edit them with natural language instructions
+  </Card>
+  <Card title="Parameters" icon="sliders" href="/features/parameters">
+    Control size, quality, format, compression, and moderation settings
+  </Card>
+  <Card title="History and tasks" icon="clock-rotate-left" href="/features/history">
+    Browse, search, filter, and re-use your generation history
+  </Card>
+  <Card title="Deploy on Vercel" icon="triangle" href="/deploy/vercel">
+    One-click Vercel deployment — the recommended way to run the app
+  </Card>
+</CardGroup>
+
+## How it works
+
+GPT Image Playground connects directly from your browser to the OpenAI API (or any compatible endpoint). You provide your API key, write a prompt, choose your parameters, and the app sends requests to OpenAI and stores results locally.
+
+<Steps>
+  <Step title="Open the app">
+    Use the [live Vercel deployment](https://gpt-image-playground.cooksleep.dev), the [GitHub Pages version](https://cooksleep.github.io/gpt_image_playground), or [deploy your own instance](/deploy/vercel).
+  </Step>
+  <Step title="Configure your API key">
+    Click the settings icon in the top-right corner. Enter your OpenAI API key and select your preferred API mode (Images API or Responses API).
+  </Step>
+  <Step title="Write a prompt and generate">
+    Type your prompt in the input bar at the bottom. Optionally upload reference images for editing. Click **Generate** to start.
+  </Step>
+  <Step title="Browse your history">
+    Generated images appear in the waterfall task grid. Click any task card to view full details, download images, or reuse the configuration.
+  </Step>
+</Steps>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Local-first storage" icon="database">
+    All images and task records are stored in your browser's IndexedDB. Nothing is sent to any server beyond the OpenAI API call itself.
+  </Card>
+  <Card title="Dual API modes" icon="code-branch">
+    Switch between the Images API (`/v1/images`) and the Responses API (`/v1/responses`) to use the best interface for your model.
+  </Card>
+  <Card title="Smart size picker" icon="crop">
+    Choose from 1K, 2K, and 4K presets with common aspect ratios, or enter custom dimensions — the app auto-normalizes to model constraints.
+  </Card>
+  <Card title="PWA support" icon="mobile">
+    Install GPT Image Playground as a Progressive Web App on your desktop or phone for a native app-like experience.
+  </Card>
+  <Card title="Data export and import" icon="file-zipper">
+    Export your entire history as a ZIP file containing raw images and a `manifest.json`. Import it on any device to restore your data.
+  </Card>
+  <Card title="Codex CLI compatibility" icon="terminal">
+    Enable Codex CLI mode to work seamlessly with non-standard API endpoints that have different behavior from the official OpenAI API.
+  </Card>
+</CardGroup>

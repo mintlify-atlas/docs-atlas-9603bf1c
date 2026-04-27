@@ -1,0 +1,102 @@
+---
+title: "Self-hosting GPT Image Playground on any server"
+description: "Build GPT Image Playground from source and serve the static output with Nginx, Apache, or any static file host for complete control over your deployment."
+---
+
+Self-hosting by building from source is the right choice when you need to deploy to existing infrastructure, use a custom domain without a third-party platform, or prefer not to run Docker. Because the build output is entirely static — plain HTML, CSS, and JavaScript — it can be served by any web server or static hosting platform that can deliver files over HTTP.
+
+<Warning>The `.dev` top-level domain is on the HSTS preload list, which means browsers enforce HTTPS for all `.dev` URLs. If you are hosting the app on a `.dev` domain and your API endpoint serves HTTP rather than HTTPS, the browser will block the requests. Use a `.dev` domain only when both your site and your API endpoint are served over HTTPS, or switch to a different TLD.</Warning>
+
+## Build the static files
+
+You need Node.js 18 or later and npm installed on your build machine.
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/CookSleep/gpt_image_playground.git
+    cd gpt_image_playground
+    ```
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  <Step title="Configure a default API URL (optional)">
+    Create a `.env.local` file in the repository root to pre-fill the API URL in the app's settings for everyone who uses your deployment:
+
+    ```bash
+    VITE_DEFAULT_API_URL=https://api.openai.com/v1
+    ```
+
+    This file is read by Vite at build time and is not committed to version control. Skip this step if you prefer each user to enter their own API URL.
+  </Step>
+  <Step title="Build the app">
+    ```bash
+    npm run build
+    ```
+
+    Vite compiles TypeScript, bundles assets with content-hash filenames, and writes everything to the `dist/` directory.
+  </Step>
+  <Step title="Deploy the dist/ directory">
+    Copy the contents of `dist/` to your web server's document root, or point your hosting platform at that directory. All files in `dist/` are static — no server-side runtime is needed.
+  </Step>
+</Steps>
+
+## Serve with Nginx
+
+GPT Image Playground is a single-page application. All routes are handled client-side, so Nginx must serve `index.html` for any URL that does not match a file on disk. Without this fallback, direct links and page refreshes return a 404.
+
+The following configuration mirrors the one used by the Docker image and is a good starting point:
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+    gzip_min_length 256;
+
+    # Long-lived cache for Vite's content-hashed asset bundles
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # SPA fallback: serve index.html for all unmatched paths
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+Replace `/usr/share/nginx/html` with the path where you copied the `dist/` contents. Vite generates asset filenames that include a content hash (e.g., `index-Dh3kL9mQ.js`), so the one-year cache on `/assets/` is safe — browsers will automatically fetch new filenames when you redeploy.
+
+## Other static hosts
+
+Any platform that can serve static files works with the `dist/` output. Most have a setting for SPA routing (serving `index.html` on 404) that you should enable.
+
+| Platform | Notes |
+| --- | --- |
+| **Netlify** | Set the publish directory to `dist/`. Add a `_redirects` file with `/* /index.html 200` or use a `netlify.toml` with `[[redirects]]` for SPA routing. |
+| **Cloudflare Pages** | Point the build output directory at `dist/`. Enable SPA mode in the Pages project settings. |
+| **GitHub Pages** | A live deployment is already available at `https://cooksleep.github.io/gpt_image_playground`. If you fork the repository, enable GitHub Pages on the `gh-pages` branch or configure a Pages workflow to deploy `dist/`. |
+| **Apache** | Copy `dist/` to the document root and add a `.htaccess` file with `FallbackResource /index.html` to handle SPA routing. |
+
+## CORS and HTTPS
+
+GPT Image Playground makes API requests directly from the browser to whatever API URL you configure. If that endpoint does not include the appropriate CORS response headers for your domain (`Access-Control-Allow-Origin`), the browser will block the requests before they reach the server.
+
+Options for working around CORS restrictions in a self-hosted setup:
+
+- **Nginx reverse proxy** — Add a `location /api/` block to your Nginx config that proxies requests to your API endpoint. The browser sees only your domain, so CORS is not involved.
+- **Cloudflare Worker** — Write a Worker that forwards requests to your API and adds the necessary CORS headers to responses.
+- **Custom backend proxy** — Any server-side proxy (Express, Caddy, Traefik, etc.) that forwards requests and injects CORS headers will work.
+
+The development proxy built into Vite (`npm run dev`) handles CORS during local development but is not included in the static build output and will not help in production.

@@ -1,0 +1,101 @@
+---
+title: "Exporting and importing your GPT Image Playground data"
+description: "Back up and restore your GPT Image Playground history with ZIP-based export and import. The archive contains raw images and a JSON manifest."
+---
+
+Because all of your task history and images live in your browser's IndexedDB, they are tied to a specific browser profile on a specific device. Exporting lets you create a portable backup, migrate your history to a different browser or computer, or simply preserve your work before clearing browser storage.
+
+<Tip>
+  Export your data regularly as a backup. All data is stored locally in your browser and can be lost if browser storage is cleared, the browser profile is deleted, or you switch to a new device without importing first.
+</Tip>
+
+## Exporting data
+
+Open **Settings** (gear icon, top-right) and click **Export data**. The app reads all tasks and images from IndexedDB and packages them into a ZIP file that is downloaded to your device automatically. The file is named:
+
+```
+gpt-image-playground-<timestamp>.zip
+```
+
+where `<timestamp>` is the Unix timestamp in milliseconds at the moment of export.
+
+The ZIP contains two things:
+
+- **`manifest.json`** — a JSON file describing all tasks, settings, and image metadata
+- **`images/` folder** — one image file per stored image, named `<sha256hash>.<ext>` (for example, `a3f1...c9.png`)
+
+Images are stored as raw binary files (PNG, JPEG, or WebP) — **not** base64-encoded. This keeps the ZIP size close to the sum of the actual image sizes.
+
+## The manifest.json structure
+
+The manifest file follows the `ExportData` interface defined in `src/types.ts`:
+
+```typescript
+interface ExportData {
+  version: number
+  exportedAt: string
+  settings: AppSettings
+  tasks: TaskRecord[]
+  imageFiles: Record<string, {
+    path: string
+    createdAt?: number
+    source?: 'upload' | 'generated'
+  }>
+}
+```
+
+| Field | Description |
+|---|---|
+| `version` | Format version number. Currently `2`. Used to detect and handle future format changes. |
+| `exportedAt` | ISO 8601 timestamp of when the export was created. |
+| `settings` | Your full settings snapshot — API key, URL, model, timeout, API mode, and Codex CLI flag. |
+| `tasks` | Array of all `TaskRecord` objects, exactly as stored in IndexedDB. |
+| `imageFiles` | A map from image `id` (SHA-256 hash) to its path inside the ZIP, creation timestamp, and source (`upload` or `generated`). |
+
+The `imageFiles` map connects task records (which reference images by their SHA-256 `id`) to the actual image files in the `images/` folder.
+
+## Importing data
+
+Open **Settings** and click **Import data**. Select the `.zip` file you exported previously. The app processes the archive in the following order:
+
+<Steps>
+  <Step title="Restore images">
+    Each entry in `imageFiles` is matched to a file in the `images/` folder of the ZIP. The raw bytes are converted back to a data URL and written to IndexedDB using the original SHA-256 hash as the `id`. The image is also added to the in-memory cache for immediate use.
+  </Step>
+  <Step title="Restore task records">
+    All `TaskRecord` entries from the manifest are written to the `tasks` IndexedDB store. Each record is written individually using the `putTask` operation, which inserts or replaces by `id`.
+  </Step>
+  <Step title="Apply settings">
+    If the manifest includes a `settings` object, it is applied to the current settings state. This overwrites your existing API key, URL, model, and other settings with those from the export.
+  </Step>
+  <Step title="Reload the task list">
+    After all writes complete, the app re-reads all tasks from IndexedDB and updates the history grid to show the full combined result.
+  </Step>
+</Steps>
+
+## What gets restored
+
+A successful import restores:
+
+- **All tasks** — every generation record including prompts, parameters, status, timestamps, and favorites
+- **All images** — both input (uploaded) and output (generated) images, stored with their original SHA-256 hashes
+- **Settings** — API key, API URL, model, timeout, API mode, and Codex CLI mode
+
+<Warning>
+  Importing does **not** delete your existing tasks first. Imported tasks are merged into your current history using `put` (upsert) operations. If an imported task has the same `id` as an existing task, it will overwrite the existing record. Tasks that exist locally but are not in the import file are left untouched.
+</Warning>
+
+## Compatibility
+
+The export format is versioned via the `version` field in `manifest.json`. The current version is `2`. Future versions of the app will maintain backward compatibility with existing exports, so archives you create today will continue to import correctly after upgrades.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Local-first data storage" icon="database" href="/data/local-storage">
+    Learn how tasks and images are stored in IndexedDB and how the app manages deduplication and cleanup.
+  </Card>
+  <Card title="Managing your generation history" icon="clock-rotate-left" href="/features/history">
+    Search, filter, favorite, and bulk-delete tasks from the history grid.
+  </Card>
+</CardGroup>

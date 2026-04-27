@@ -1,0 +1,92 @@
+{
+  "projectType": "saas",
+  "projectName": "GPT Image Playground",
+  "projectDescription": "A browser-based image generation and editing tool powered by OpenAI's image APIs, with local-first data storage, rich parameter controls, and history management.",
+  "theme": "luma",
+  "primaryColor": "#6366f1",
+  "lightColor": "#eef2ff",
+  "darkColor": "#312e81",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/image-generation",
+              "features/image-editing",
+              "features/parameters",
+              "features/history"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/api-setup",
+              "configuration/url-params",
+              "configuration/codex-cli-mode"
+            ]
+          },
+          {
+            "group": "Data Management",
+            "pages": [
+              "data/local-storage",
+              "data/export-import"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Deploy",
+            "pages": [
+              "deploy/vercel",
+              "deploy/docker",
+              "deploy/self-hosted"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/local-setup",
+              "development/dev-proxy",
+              "development/tech-stack"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Text-to-image generation via OpenAI Images API and Responses API",
+    "Reference image editing with up to 16 input images (file, paste, drag-and-drop)",
+    "Smart size selector with 1K/2K/4K presets and custom dimensions with auto-normalization",
+    "Fine-grained parameter controls: quality, output format, compression, moderation",
+    "Waterfall-layout task history with search, filtering, favorites, and multi-select",
+    "Iterative editing by promoting generated outputs back to input images",
+    "Local-first storage using IndexedDB with SHA-256 image deduplication",
+    "ZIP-based data export and import with raw image files and manifest",
+    "PWA support for installable app experience on desktop and mobile",
+    "Codex CLI compatibility mode for non-standard API endpoints",
+    "Responsive design with desktop and mobile optimized interactions",
+    "URL query parameter configuration for bookmarks and sharing"
+  ],
+  "publicApiSurface": [
+    "GET /?apiUrl=&apiKey=&apiMode=&codexCli= (URL query params for pre-filling config)",
+    "POST /v1/images/generations (Images API - text to image)",
+    "POST /v1/images/edits (Images API - image editing with reference images)",
+    "POST /v1/responses (Responses API with image_generation tool)",
+    "VITE_DEFAULT_API_URL (build-time environment variable for default API endpoint)",
+    "API_URL (Docker runtime environment variable for default API endpoint)"
+  ]
+}

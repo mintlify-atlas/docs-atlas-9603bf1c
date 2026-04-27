@@ -1,0 +1,88 @@
+---
+title: "Tech stack and architecture of GPT Image Playground"
+description: "GPT Image Playground uses React 19, TypeScript, Vite, Tailwind CSS, and Zustand. All data is stored client-side in IndexedDB and localStorage — no backend."
+---
+
+GPT Image Playground is a fully client-side single-page application — there is no backend server. Every user interaction, API call, and data storage operation happens entirely in the browser. This page describes the major libraries and architectural decisions behind the project.
+
+## Core technologies
+
+| Layer | Technology | Version |
+|---|---|---|
+| UI framework | React | 19 |
+| Language | TypeScript | 5.x |
+| Build tool | Vite | 6.x |
+| Styling | Tailwind CSS | 3.x |
+| State management | Zustand | 5.x |
+| ZIP compression | fflate | 0.8.x |
+
+## Architecture overview
+
+### State management (Zustand)
+
+Application state is managed with [Zustand](https://zustand.docs.pmnd.rs/). The main store (`src/store.ts`) holds:
+
+- **Settings** — API key, URL, model, timeout, API mode, Codex CLI flag (persisted to `localStorage` via Zustand's `persist` middleware)
+- **Input state** — current prompt text and reference image list (in-memory only)
+- **Generation parameters** — size, quality, format, compression, moderation, batch count (persisted to `localStorage`)
+- **Task list** — all `TaskRecord` objects (loaded from IndexedDB on startup, kept in sync)
+- **UI state** — active modal, lightbox, toast, confirm dialog, selection state
+
+### Data persistence
+
+Two storage mechanisms are used:
+
+- **`localStorage`** — settings and generation parameters, managed automatically by Zustand's `persist` middleware under the key `gpt-image-playground`
+- **IndexedDB** — task records (`tasks` object store) and image binary data (`images` object store), accessed via the thin wrapper in `src/lib/db.ts`
+
+Images are content-addressed using SHA-256 hashes (via `crypto.subtle.digest`), which provides automatic deduplication — the same image uploaded or generated twice is stored only once.
+
+### API layer (`src/lib/api.ts`)
+
+The API module handles two distinct call patterns:
+
+- **Images API** — `POST /v1/images/generations` for text-to-image, `POST /v1/images/edits` (multipart form data) for editing with reference images
+- **Responses API** — `POST /v1/responses` with an `image_generation` tool call, supporting both text-only and multimodal (text + images) input
+
+Both paths return results normalized to a common `CallApiResult` shape: an array of base64 data-URL images, per-image actual parameters, and per-image revised prompts.
+
+### Size normalization (`src/lib/size.ts`)
+
+Custom image dimensions are auto-normalized to satisfy model constraints:
+- Width and height must be multiples of **16**
+- Maximum edge length: **3840px**
+- Maximum aspect ratio: **3:1**
+- Total pixel count: **655,360 – 8,294,400**
+
+### PWA
+
+The app is configured as a Progressive Web App. Users can install it to their desktop or mobile home screen via the browser's "Add to home screen" / "Install app" prompt, providing a standalone, full-screen experience without a browser toolbar.
+
+## Project structure
+
+```
+src/
+├── App.tsx              # Root component, layout, initialization
+├── main.tsx             # Entry point
+├── store.ts             # Zustand store + async actions
+├── types.ts             # All TypeScript type definitions
+├── index.css            # Tailwind base styles
+├── components/          # React UI components
+│   ├── Header.tsx
+│   ├── InputBar.tsx
+│   ├── TaskGrid.tsx
+│   ├── TaskCard.tsx
+│   ├── DetailModal.tsx
+│   ├── SettingsModal.tsx
+│   ├── SizePickerModal.tsx
+│   ├── Lightbox.tsx
+│   └── ...
+└── lib/                 # Pure utility modules
+    ├── api.ts           # OpenAI API calls
+    ├── db.ts            # IndexedDB wrapper
+    ├── size.ts          # Size calculation & normalization
+    ├── devProxy.ts      # Dev proxy config & URL building
+    ├── clipboard.ts     # Clipboard helpers
+    ├── paramDisplay.tsx # Parameter display helpers
+    └── viewport.ts      # Viewport utilities
+```

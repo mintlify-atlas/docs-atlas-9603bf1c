@@ -1,0 +1,74 @@
+---
+title: "Configuring the local development CORS proxy for testing"
+description: "Configure the Vite dev proxy to route API requests through localhost and bypass browser CORS restrictions when testing against local API endpoints."
+---
+
+When your image API endpoint doesn't include CORS headers for `http://localhost:5173`, the browser blocks the request. The optional dev proxy solves this by routing API calls through the Vite development server, so the browser sees only same-origin requests.
+
+<Note>
+  This proxy is active **only** during `npm run dev`. It has no effect on production builds, Vercel deployments, Docker containers, or GitHub Pages.
+</Note>
+
+## How the proxy works
+
+With the proxy enabled, the request chain is:
+
+```
+Browser (localhost:5173)
+  → same-origin request to localhost:5173/api-proxy/v1/images/generations
+  → Vite dev server proxies to http://127.0.0.1:3000/v1/images/generations
+```
+
+The browser only ever sees a same-origin request, so CORS is never triggered.
+
+## Setting up the proxy
+
+<Steps>
+  <Step title="Copy the example config">
+    ```bash
+    cp dev-proxy.config.example.json dev-proxy.config.json
+    ```
+  </Step>
+  <Step title="Edit dev-proxy.config.json">
+    ```json dev-proxy.config.json
+    {
+      "enabled": true,
+      "prefix": "/api-proxy",
+      "target": "http://127.0.0.1:3000",
+      "changeOrigin": true,
+      "secure": false
+    }
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `enabled` | Set to `true` to activate the proxy |
+    | `prefix` | The path prefix the browser uses for proxied requests |
+    | `target` | The real API base URL the Vite server forwards to |
+    | `changeOrigin` | Rewrites the `Host` header to match `target` — keep `true` |
+    | `secure` | Set to `false` if `target` uses a self-signed HTTPS cert |
+  </Step>
+  <Step title="Restart the dev server">
+    ```bash
+    npm run dev
+    ```
+
+    Config changes are read at server startup, so a restart is required.
+  </Step>
+  <Step title="Set the matching API URL in the app">
+    In the app's settings panel, set **API URL** to the same address as `target` — for example, `http://127.0.0.1:3000`. The app detects that this matches the proxy target and automatically rewrites outgoing requests to use the `prefix` path instead.
+  </Step>
+</Steps>
+
+## Path rewriting behavior
+
+If the `target` or the configured **API URL** already includes `/v1` in the path, the proxy won't append `/v1` a second time. For example, if `target` is `http://127.0.0.1:3000/v1`, requests become `/api-proxy/responses` rather than `/api-proxy/v1/responses`.
+
+## Production alternatives
+
+The dev proxy is not available in production. For deployed environments where the API doesn't have CORS headers, use one of these server-side approaches:
+
+- **Vercel Functions** — add an API route that forwards requests
+- **Cloudflare Worker** — a lightweight proxy at the edge
+- **Nginx reverse proxy** — proxy `/v1/` to the API on the same server
+- **Self-hosted backend** — any server-side relay

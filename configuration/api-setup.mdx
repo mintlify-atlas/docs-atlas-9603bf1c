@@ -1,0 +1,82 @@
+---
+title: "Configuring your API key and endpoint in settings"
+description: "Set up your OpenAI API key and endpoint URL in GPT Image Playground settings to connect the app to the Images API or Responses API."
+---
+
+GPT Image Playground has no backend server — every request goes directly from your browser to the API endpoint you configure. Click the gear icon in the top-right corner of the app to open **Settings**. All values you enter there are saved in your browser's `localStorage` and restored automatically the next time you visit.
+
+<Note>
+  Your API key and API URL are stored only in your browser's `localStorage`. GPT Image Playground has no server-side component and never transmits your credentials anywhere except directly to the API endpoint you configure.
+</Note>
+
+## Opening settings
+
+Click the **gear icon** in the top-right corner of the app to open the Settings panel. You can change any value at any time — the panel saves changes immediately. Close the panel by clicking outside it or pressing Escape.
+
+## API key
+
+Paste your OpenAI API key (or any compatible key for third-party endpoints) into the **API Key** field. The key is stored only in `localStorage` and is sent exclusively in the `Authorization: Bearer <key>` header on each request to the configured API URL.
+
+If the API key field is empty when you click **Generate**, the app will prompt you to open Settings and add a key before the request is sent.
+
+## API URL
+
+The **API URL** field sets the base URL for all API requests. The default value is `https://api.openai.com/v1`.
+
+You can change this to any OpenAI-compatible endpoint, for example a self-hosted proxy or a third-party provider that mirrors the OpenAI API contract. The app appends the appropriate path suffix to whatever base URL you provide:
+
+- Images API generation: `<apiUrl>/images/generations`
+- Images API editing: `<apiUrl>/images/edits`
+- Responses API: `<apiUrl>/responses`
+
+<Warning>
+  On `.dev` domains (including `gpt-image-playground.cooksleep.dev`), browsers enforce HTTPS-only connections. If you need to connect to an HTTP API URL, use the GitHub Pages version at `cooksleep.github.io/gpt_image_playground` or a self-hosted instance instead.
+</Warning>
+
+## API mode
+
+The **API mode** selector lets you choose between two different endpoints.
+
+<Tabs>
+  <Tab title="Images API (default)">
+    The Images API mode calls:
+
+    - `/v1/images/generations` for text-to-image generation
+    - `/v1/images/edits` when reference images are attached
+
+    The default model for this mode is `gpt-image-2`. This is the recommended starting point for most users.
+  </Tab>
+  <Tab title="Responses API">
+    The Responses API mode calls `/v1/responses` and passes the `image_generation` tool in the request body. This allows any text model that supports the tool to generate images as part of a multimodal workflow.
+
+    The default model for this mode is `gpt-5.5`. Use this mode when you want to use a text model rather than a dedicated image model.
+  </Tab>
+</Tabs>
+
+You can switch API modes at any time without losing your generation history.
+
+## Model
+
+The **Model** field sets the model name sent in every API request. The default value depends on the selected API mode:
+
+- **Images API**: `gpt-image-2`
+- **Responses API**: `gpt-5.5`
+
+If you switch API modes, the model field is not automatically updated — update it manually to match the new mode if needed.
+
+## Timeout
+
+The **Timeout** field sets how many seconds the app waits for a response before aborting the request. The default is `300` seconds (5 minutes).
+
+Image generation — especially at high quality or large sizes — can take a long time. If you frequently hit timeouts, increase this value. If you are using a fast local endpoint, you can reduce it to fail faster on errors.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Pre-filling settings with URL parameters" icon="link" href="/configuration/url-params">
+    Use URL query parameters to pre-configure API URL, key, and mode for bookmarks or sharing.
+  </Card>
+  <Card title="Codex CLI compatibility mode" icon="terminal" href="/configuration/codex-cli-mode">
+    Learn when and how to enable Codex CLI mode for non-standard API endpoints.
+  </Card>
+</CardGroup>
